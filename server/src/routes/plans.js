@@ -104,15 +104,14 @@ router.get('/:weekStart/grocery', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT i.name, i.category, COALESCE(c.label, i.category) AS category_label,
-              ri.unit, SUM(ri.quantity) AS quantity
+      `SELECT i.name, COALESCE(c.label, i.category) AS category_label
        FROM meal_plans mp
        JOIN plan_slots ps ON ps.meal_plan_id = mp.id
        JOIN recipe_ingredients ri ON ri.recipe_id = ps.recipe_id
        JOIN ingredients i ON i.id = ri.ingredient_id
        LEFT JOIN ingredient_categories c ON c.slug = i.category
        WHERE mp.user_id = ? AND mp.week_start = ?
-       GROUP BY i.id, i.name, i.category, category_label, ri.unit
+       GROUP BY i.id, i.name, category_label, c.sort_order
        ORDER BY COALESCE(c.sort_order, 99), i.name`,
       [req.user.id, weekStart]
     );
@@ -121,11 +120,7 @@ router.get('/:weekStart/grocery', async (req, res) => {
     for (const row of rows) {
       const key = row.category_label;
       if (!groups[key]) groups[key] = [];
-      groups[key].push({
-        name: row.name,
-        unit: row.unit,
-        quantity: Number(row.quantity),
-      });
+      groups[key].push({ name: row.name });
     }
 
     res.json({ weekStart, groups });

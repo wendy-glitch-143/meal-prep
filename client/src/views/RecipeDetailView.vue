@@ -48,6 +48,18 @@ onMounted(async () => {
           <p class="desc">{{ recipe.description }}</p>
         </div>
         <div class="aside">
+          <div v-if="!isPublic" class="actions">
+            <router-link class="icon-btn" :to="{ path: '/menu', query: { edit: recipe.id } }" aria-label="Edit">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4l10.5-10.5-4-4L4 16v4zM14.5 5.5l4 4" />
+              </svg>
+            </router-link>
+            <button class="icon-btn" type="button" aria-label="Delete" @click="removeRecipe">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14M10 7V5h4v2M8 7l1 12h6l1-12" />
+              </svg>
+            </button>
+          </div>
           <p class="meta">{{ recipe.prep_minutes }} min · {{ recipe.servings }} servings</p>
           <a v-if="recipe.video_url" class="video" :href="recipe.video_url" target="_blank" rel="noreferrer">
             Watch video
@@ -60,10 +72,6 @@ onMounted(async () => {
           {{ Number(item.quantity) }} {{ item.unit }} {{ item.name }}
         </li>
       </ul>
-      <div v-if="!isPublic" class="actions">
-        <router-link class="btn btn-ghost" :to="{ path: '/menu', query: { edit: recipe.id } }">Edit</router-link>
-        <button class="btn btn-ghost" type="button" @click="removeRecipe">Delete</button>
-      </div>
     </article>
   </main>
 </template>
@@ -137,13 +145,35 @@ ul {
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 24px 0 0;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
-.actions .btn {
-  text-decoration: none;
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-btn:hover {
+  color: var(--ink);
 }
 
 @media (max-width: 520px) {

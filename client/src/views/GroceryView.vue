@@ -13,11 +13,6 @@ const checked = ref({});
 const aisles = computed(() => Object.keys(groups.value));
 const total = computed(() => Object.values(groups.value).reduce((sum, items) => sum + items.length, 0));
 
-function qty(item) {
-  const n = Number(item.quantity);
-  return Number.isInteger(n) ? n : n.toFixed(2);
-}
-
 async function load() {
   error.value = '';
   try {
@@ -59,11 +54,9 @@ watch(weekStart, load);
     <section v-else class="aisles">
       <article v-for="aisle in aisles" :key="aisle" class="card aisle">
         <h2>{{ aisle }}</h2>
-        <label v-for="item in groups[aisle]" :key="`${item.name}-${item.unit}`" class="item">
-          <input v-model="checked[`${item.name}-${item.unit}`]" type="checkbox" />
-          <span :class="{ done: checked[`${item.name}-${item.unit}`] }">
-            {{ qty(item) }} {{ item.unit }} {{ item.name }}
-          </span>
+        <label v-for="item in groups[aisle]" :key="item.name" class="item">
+          <input v-model="checked[item.name]" type="checkbox" />
+          <span :class="{ done: checked[item.name] }">{{ item.name }}</span>
         </label>
       </article>
     </section>
