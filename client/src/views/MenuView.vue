@@ -3,9 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
-import VideoEmbed from '../components/VideoEmbed.vue';
 import MenuQr from '../components/MenuQr.vue';
-import { parseVideo } from '../video';
 
 const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯', '🍲', '🐟', '🍋', '🥘', '🍝', '🌮', '🍗', '🍚', '🍞', '🧀', '🍎', '🥕', '🥞', '🍕', '🍜', '🥙', '🍪', '☕'];
 
@@ -221,7 +219,6 @@ onMounted(async () => {
           v-model="form.video_url"
           placeholder="YouTube, TikTok, Instagram, or Facebook Reels"
         />
-        <VideoEmbed v-if="parseVideo(form.video_url)" :url="form.video_url" />
       </div>
 
       <h3>Ingredients</h3>
