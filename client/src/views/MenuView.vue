@@ -100,26 +100,14 @@ async function startEdit(recipe) {
   }
 }
 
-async function toggleAvailable(recipe) {
+async function toggleAvailable(recipe, available) {
   error.value = '';
   try {
     const data = await api(`/api/recipes/${recipe.id}/available`, {
       method: 'PATCH',
-      body: JSON.stringify({ available: !Number(recipe.available) }),
+      body: JSON.stringify({ available }),
     });
     recipe.available = data.available;
-  } catch (err) {
-    error.value = err.message;
-  }
-}
-
-async function removeRecipe(recipe) {
-  if (!confirm(`Delete “${recipe.name}”?`)) return;
-  error.value = '';
-  try {
-    await api(`/api/recipes/${recipe.id}`, { method: 'DELETE' });
-    if (editingId.value === recipe.id) closeForm();
-    await load();
   } catch (err) {
     error.value = err.message;
   }
@@ -273,13 +261,15 @@ onMounted(async () => {
         <router-link :to="`/menu/${recipe.id}`">
           <RecipeCard :recipe="recipe" />
         </router-link>
-        <div class="card-actions">
-          <button class="btn btn-ghost" type="button" @click="toggleAvailable(recipe)">
-            {{ Number(recipe.available) ? 'Available' : 'Unavailable' }}
-          </button>
-          <button class="btn btn-ghost" type="button" @click="startEdit(recipe)">Edit</button>
-          <button class="btn btn-ghost" type="button" @click="removeRecipe(recipe)">Delete</button>
-        </div>
+        <label class="avail-switch">
+          <input
+            type="checkbox"
+            :checked="Number(recipe.available)"
+            @change="toggleAvailable(recipe, $event.target.checked)"
+          />
+          <span class="track"></span>
+          <span>{{ Number(recipe.available) ? 'Available' : 'Unavailable' }}</span>
+        </label>
       </div>
     </section>
   </main>
@@ -393,15 +383,55 @@ h1 {
   gap: 8px;
 }
 
-.card-actions {
+.avail-switch {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  cursor: pointer;
 }
 
-.card-actions .btn {
-  flex: 1;
-  padding: 8px 12px;
+.avail-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.track {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.2s;
+}
+
+.track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+  transition: transform 0.2s;
+}
+
+.avail-switch input:checked + .track {
+  background: var(--sage);
+}
+
+.avail-switch input:checked + .track::after {
+  transform: translateX(16px);
+}
+
+.avail-switch input:focus-visible + .track {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
 }
 
 @media (max-width: 720px) {
