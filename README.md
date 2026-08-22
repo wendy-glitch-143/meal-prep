@@ -42,4 +42,4 @@ Sign up, add your own recipes on **Menu**, drop them into the **Planner**, then 
 
 **API on Render** — connect this GitHub repo as a Web Service (or use `render.yaml`). Set `FRONTEND_URL` to your Vercel URL and add MySQL env vars (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL=true`). After the first deploy, run `npm run db:init` as a one-off job, or locally against the hosted database.
 
-**App on Vercel** — import the repo. Set `VITE_API_URL` to your Render URL, for example `https://prepd-api.onrender.com` (no trailing slash). Rebuild after changing it.
+**App on Vercel** — import the repo with **Root Directory left empty** (the repo root, not `client`). Set `VITE_API_URL` to your Render URL, for example `https://prepd-api.onrender.com` (no trailing slash). Rebuild after changing it.
