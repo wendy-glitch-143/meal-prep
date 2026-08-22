@@ -93,21 +93,3 @@ CREATE TABLE plan_slots (
   FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
   FOREIGN KEY (recipe_id) REFERENCES recipes(id)
 );
-
-INSERT INTO meal_types (slug, label, color, is_default, sort_order) VALUES
-  ('breakfast', 'Breakfast', '#E8D5B7', 1, 1),
-  ('lunch', 'Lunch', '#C9D4B8', 1, 2),
-  ('dinner', 'Dinner', '#E8C4A0', 1, 3);
-
-INSERT INTO ingredient_categories (slug, label, is_default, sort_order) VALUES
-  ('produce', 'Produce', 1, 1),
-  ('protein', 'Protein', 1, 2),
-  ('dairy', 'Dairy', 1, 3),
-  ('pantry', 'Pantry', 1, 4),
-  ('other', 'Other', 1, 5);
-
-INSERT INTO recipe_categories (slug, label, color, is_default, sort_order) VALUES
-  ('chicken', 'Chicken', '#E8C4A0', 1, 1),
-  ('pork', 'Pork', '#E4B4A4', 1, 2),
-  ('beef', 'Beef', '#D4B896', 1, 3),
-  ('vegetables', 'Vegetables', '#C9D4B8', 1, 4);
