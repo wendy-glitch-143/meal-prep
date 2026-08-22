@@ -54,16 +54,16 @@ onMounted(async () => {
           </a>
         </div>
       </div>
-      <div v-if="!isPublic" class="actions">
-        <router-link class="btn btn-ghost" :to="{ path: '/menu', query: { edit: recipe.id } }">Edit</router-link>
-        <button class="btn btn-ghost" type="button" @click="removeRecipe">Delete</button>
-      </div>
       <h2>Ingredients</h2>
       <ul>
         <li v-for="item in recipe.ingredients" :key="item.name">
           {{ Number(item.quantity) }} {{ item.unit }} {{ item.name }}
         </li>
       </ul>
+      <div v-if="!isPublic" class="actions">
+        <router-link class="btn btn-ghost" :to="{ path: '/menu', query: { edit: recipe.id } }">Edit</router-link>
+        <button class="btn btn-ghost" type="button" @click="removeRecipe">Delete</button>
+      </div>
     </article>
   </main>
 </template>
@@ -139,7 +139,7 @@ ul {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 16px 0;
+  margin: 24px 0 0;
 }
 
 .actions .btn {
