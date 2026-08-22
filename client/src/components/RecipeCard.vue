@@ -30,6 +30,11 @@ defineProps({
   font-size: 2rem;
 }
 
+.chip {
+  align-self: start;
+  width: fit-content;
+}
+
 h3 {
   margin: 4px 0 0;
 }
