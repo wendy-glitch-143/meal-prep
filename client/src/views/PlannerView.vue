@@ -26,10 +26,7 @@ const slotMap = computed(() => {
   return map;
 });
 
-const pickerRecipes = computed(() => {
-  if (!picker.value) return [];
-  return recipes.value.filter((r) => r.meal_type === picker.value.meal);
-});
+const pickerRecipes = computed(() => (picker.value ? recipes.value : []));
 
 const visibleDays = computed(() =>
   view.value === 'week' ? DAYS.map((_, i) => i) : [focusDay.value]
@@ -168,9 +165,9 @@ watch(weekStart, () => {
 
     <div v-if="picker" class="overlay" @click.self="picker = null">
       <section class="card picker">
-        <h2>Choose {{ picker.meal }}</h2>
+        <h2>Choose a recipe</h2>
         <p v-if="!pickerRecipes.length" class="empty">
-          No {{ picker.meal }} recipes yet.
+          No recipes yet.
           <router-link to="/menu">Add one</router-link>
         </p>
         <button

@@ -10,7 +10,7 @@ const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯
 const route = useRoute();
 const router = useRouter();
 const recipes = ref([]);
-const mealTypes = ref([]);
+const recipeCategories = ref([]);
 const categories = ref([]);
 const filter = ref('all');
 const error = ref('');
@@ -23,7 +23,7 @@ function blankForm() {
   return {
     name: '',
     description: '',
-    meal_type: mealTypes.value[0]?.slug || 'breakfast',
+    category: recipeCategories.value[0]?.slug || 'chicken',
     prep_minutes: 15,
     servings: 2,
     emoji: '🍽️',
@@ -33,13 +33,13 @@ function blankForm() {
 }
 
 const visible = computed(() =>
-  filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.meal_type === filter.value)
+  filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.category === filter.value)
 );
 
 async function load() {
   const [recipeRows, settings] = await Promise.all([api('/api/recipes'), api('/api/settings')]);
   recipes.value = recipeRows;
-  mealTypes.value = settings.mealTypes || [];
+  recipeCategories.value = settings.recipeCategories || [];
   categories.value = settings.categories || [];
 }
 
@@ -80,7 +80,7 @@ async function startEdit(recipe) {
     form.value = {
       name: full.name,
       description: full.description || '',
-      meal_type: full.meal_type,
+      category: full.category || recipeCategories.value[0]?.slug || 'chicken',
       prep_minutes: full.prep_minutes,
       servings: full.servings,
       emoji: full.emoji || '🍽️',
@@ -116,10 +116,10 @@ async function saveRecipe() {
   error.value = '';
   saving.value = true;
   try {
-    const meal = mealTypes.value.find((m) => m.slug === form.value.meal_type);
+    const cat = recipeCategories.value.find((c) => c.slug === form.value.category);
     const payload = {
       ...form.value,
-      color: meal?.color,
+      color: cat?.color,
       ingredients: form.value.ingredients.filter((item) => item.name.trim()),
     };
     if (editingId.value) {
@@ -194,9 +194,9 @@ onMounted(async () => {
       </div>
       <div class="row">
         <div class="field">
-          <label for="meal_type">Meal</label>
-          <select id="meal_type" v-model="form.meal_type">
-            <option v-for="meal in mealTypes" :key="meal.slug" :value="meal.slug">{{ meal.label }}</option>
+          <label for="category">Category</label>
+          <select id="category" v-model="form.category">
+            <option v-for="cat in recipeCategories" :key="cat.slug" :value="cat.slug">{{ cat.label }}</option>
           </select>
         </div>
         <div class="field">
@@ -242,14 +242,14 @@ onMounted(async () => {
         All
       </button>
       <button
-        v-for="meal in mealTypes"
-        :key="meal.slug"
+        v-for="cat in recipeCategories"
+        :key="cat.slug"
         class="btn"
-        :class="filter === meal.slug ? 'btn-sage' : 'btn-ghost'"
+        :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
         type="button"
-        @click="filter = meal.slug"
+        @click="filter = cat.slug"
       >
-        {{ meal.label }}
+        {{ cat.label }}
       </button>
     </div>
 

@@ -17,7 +17,8 @@ router.get('/', async (_req, res) => {
   try {
     const [mealTypes] = await pool.query('SELECT * FROM meal_types ORDER BY sort_order, id');
     const [categories] = await pool.query('SELECT * FROM ingredient_categories ORDER BY sort_order, id');
-    res.json({ mealTypes, categories });
+    const [recipeCategories] = await pool.query('SELECT * FROM recipe_categories ORDER BY sort_order, id');
+    res.json({ mealTypes, categories, recipeCategories });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not load settings' });
@@ -56,13 +57,11 @@ router.delete('/meal-types/:id', async (req, res) => {
     if (total <= 1) return res.status(400).json({ error: 'Keep at least one meal type' });
 
     const [[{ used }]] = await pool.query(
-      `SELECT
-         (SELECT COUNT(*) FROM recipes WHERE meal_type = ?) +
-         (SELECT COUNT(*) FROM plan_slots WHERE meal_type = ?) AS used`,
-      [rows[0].slug, rows[0].slug]
+      'SELECT COUNT(*) AS used FROM plan_slots WHERE meal_type = ?',
+      [rows[0].slug]
     );
     if (used > 0) {
-      return res.status(400).json({ error: 'This meal type is still used by a recipe or plan' });
+      return res.status(400).json({ error: 'This meal type is still used in a plan' });
     }
 
     await pool.query('DELETE FROM meal_types WHERE id = ?', [req.params.id]);
@@ -70,6 +69,55 @@ router.delete('/meal-types/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not remove meal type' });
+  }
+});
+
+router.post('/recipe-categories', async (req, res) => {
+  const label = String(req.body?.label || '').trim();
+  const slug = slugify(label);
+  if (!slug) return res.status(400).json({ error: 'Category name is required' });
+
+  try {
+    const [[{ maxSort }]] = await pool.query(
+      'SELECT COALESCE(MAX(sort_order), 0) AS maxSort FROM recipe_categories'
+    );
+    const color = EXTRA_COLORS[maxSort % EXTRA_COLORS.length];
+    await pool.query(
+      'INSERT INTO recipe_categories (slug, label, color, is_default, sort_order) VALUES (?, ?, ?, 0, ?)',
+      [slug, label, color, maxSort + 1]
+    );
+    const [rows] = await pool.query('SELECT * FROM recipe_categories WHERE slug = ?', [slug]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'That category already exists' });
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Could not add category' });
+  }
+});
+
+router.delete('/recipe-categories/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM recipe_categories WHERE id = ?', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Category not found' });
+
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM recipe_categories');
+    if (total <= 1) return res.status(400).json({ error: 'Keep at least one menu category' });
+
+    const [[{ used }]] = await pool.query(
+      'SELECT COUNT(*) AS used FROM recipes WHERE category = ?',
+      [rows[0].slug]
+    );
+    if (used > 0) {
+      return res.status(400).json({ error: 'This category is still used by a recipe' });
+    }
+
+    await pool.query('DELETE FROM recipe_categories WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not remove category' });
   }
 });
 

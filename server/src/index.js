@@ -7,6 +7,7 @@ import planRoutes from './routes/plans.js';
 import settingsRoutes from './routes/settings.js';
 import publicRoutes from './routes/public.js';
 import { requireAuth } from './middleware/auth.js';
+import { ensureSchema } from './migrate.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -39,4 +40,9 @@ function start(tries = 0) {
   });
 }
 
-start();
+ensureSchema()
+  .then(() => start())
+  .catch((err) => {
+    console.error(err.code ? `${err.code}: ${err.message}` : err.message);
+    start();
+  });

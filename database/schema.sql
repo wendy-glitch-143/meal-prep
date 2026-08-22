@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS ingredients;
 DROP TABLE IF EXISTS recipes;
 DROP TABLE IF EXISTS meal_types;
 DROP TABLE IF EXISTS ingredient_categories;
+DROP TABLE IF EXISTS recipe_categories;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
@@ -34,11 +35,21 @@ CREATE TABLE ingredient_categories (
   sort_order INT NOT NULL DEFAULT 0
 );
 
+CREATE TABLE recipe_categories (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  slug VARCHAR(50) NOT NULL UNIQUE,
+  label VARCHAR(80) NOT NULL,
+  color VARCHAR(16) NOT NULL DEFAULT '#E8D5B7',
+  is_default TINYINT NOT NULL DEFAULT 0,
+  sort_order INT NOT NULL DEFAULT 0
+);
+
 CREATE TABLE recipes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
   description TEXT,
   meal_type VARCHAR(50) NOT NULL,
+  category VARCHAR(50) NOT NULL,
   prep_minutes INT NOT NULL,
   servings INT NOT NULL DEFAULT 2,
   emoji VARCHAR(16) NOT NULL,
@@ -92,3 +103,9 @@ INSERT INTO ingredient_categories (slug, label, is_default, sort_order) VALUES
   ('dairy', 'Dairy', 1, 3),
   ('pantry', 'Pantry', 1, 4),
   ('other', 'Other', 1, 5);
+
+INSERT INTO recipe_categories (slug, label, color, is_default, sort_order) VALUES
+  ('chicken', 'Chicken', '#E8C4A0', 1, 1),
+  ('pork', 'Pork', '#E4B4A4', 1, 2),
+  ('beef', 'Beef', '#D4B896', 1, 3),
+  ('vegetables', 'Vegetables', '#C9D4B8', 1, 4);

@@ -4,23 +4,19 @@ import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 
 const recipes = ref([]);
-const mealTypes = ref([]);
+const recipeCategories = ref([]);
 const filter = ref('all');
 const error = ref('');
 
 const visible = computed(() =>
-  filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.meal_type === filter.value)
+  filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.category === filter.value)
 );
-
-function labelFor(slug) {
-  return mealTypes.value.find((m) => m.slug === slug)?.label || slug;
-}
 
 onMounted(async () => {
   try {
     const data = await api('/api/public/menu');
     recipes.value = data.recipes || [];
-    mealTypes.value = data.mealTypes || [];
+    recipeCategories.value = data.recipeCategories || [];
   } catch (err) {
     error.value = err.message;
   }
@@ -42,14 +38,14 @@ onMounted(async () => {
         All
       </button>
       <button
-        v-for="meal in mealTypes"
-        :key="meal.slug"
+        v-for="cat in recipeCategories"
+        :key="cat.slug"
         class="btn"
-        :class="filter === meal.slug ? 'btn-sage' : 'btn-ghost'"
+        :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
         type="button"
-        @click="filter = meal.slug"
+        @click="filter = cat.slug"
       >
-        {{ meal.label }}
+        {{ cat.label }}
       </button>
     </div>
 
@@ -57,7 +53,7 @@ onMounted(async () => {
     <p v-else-if="!visible.length" class="empty card">No dishes on the menu yet.</p>
     <section class="grid">
       <router-link v-for="recipe in visible" :key="recipe.id" :to="`/view/${recipe.id}`">
-        <RecipeCard :recipe="{ ...recipe, meal_type: labelFor(recipe.meal_type) }" />
+        <RecipeCard :recipe="recipe" />
       </router-link>
     </section>
   </main>

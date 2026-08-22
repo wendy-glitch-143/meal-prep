@@ -7,7 +7,7 @@ defineProps({
 <template>
   <article class="recipe-card card" :style="{ '--accent': recipe.color }">
     <div class="emoji">{{ recipe.emoji }}</div>
-    <span class="chip">{{ recipe.meal_type }}</span>
+    <span class="chip">{{ recipe.category_label || recipe.category }}</span>
     <h3>{{ recipe.name }}</h3>
     <p>{{ recipe.description }}</p>
     <small>{{ recipe.prep_minutes }} min · {{ recipe.servings }} servings</small>

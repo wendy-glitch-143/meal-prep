@@ -5,14 +5,17 @@ import { useTheme } from '../theme';
 
 const { theme, themes, applyTheme } = useTheme();
 const mealTypes = ref([]);
+const recipeCategories = ref([]);
 const categories = ref([]);
 const mealLabel = ref('');
+const recipeCategoryLabel = ref('');
 const categoryLabel = ref('');
 const error = ref('');
 
 async function load() {
   const data = await api('/api/settings');
   mealTypes.value = data.mealTypes || [];
+  recipeCategories.value = data.recipeCategories || [];
   categories.value = data.categories || [];
 }
 
@@ -34,6 +37,30 @@ async function removeMeal(item) {
   error.value = '';
   try {
     await api(`/api/settings/meal-types/${item.id}`, { method: 'DELETE' });
+    await load();
+  } catch (err) {
+    error.value = err.message;
+  }
+}
+
+async function addRecipeCategory() {
+  error.value = '';
+  try {
+    await api('/api/settings/recipe-categories', {
+      method: 'POST',
+      body: JSON.stringify({ label: recipeCategoryLabel.value }),
+    });
+    recipeCategoryLabel.value = '';
+    await load();
+  } catch (err) {
+    error.value = err.message;
+  }
+}
+
+async function removeRecipeCategory(item) {
+  error.value = '';
+  try {
+    await api(`/api/settings/recipe-categories/${item.id}`, { method: 'DELETE' });
     await load();
   } catch (err) {
     error.value = err.message;
@@ -79,7 +106,7 @@ onMounted(async () => {
       <div>
         <p class="eyebrow">Preferences</p>
         <h1>General settings</h1>
-        <p>Add or remove meal and ingredient types, and pick a theme.</p>
+        <p>Meal types are for the planner. Menu categories are for the recipe list.</p>
       </div>
     </header>
 
@@ -110,7 +137,7 @@ onMounted(async () => {
     <section class="grid">
       <article class="card panel">
         <h2>Meal types</h2>
-        <p class="hint">Remove a type only if no recipes or plans still use it.</p>
+        <p class="hint">Shown as slots in the planner. Remove only if no plan uses it.</p>
         <ul>
           <li v-for="item in mealTypes" :key="item.id">
             <span>{{ item.label }}</span>
@@ -119,6 +146,21 @@ onMounted(async () => {
         </ul>
         <form class="add" @submit.prevent="addMeal">
           <input v-model="mealLabel" placeholder="e.g. Snack" required />
+          <button class="btn btn-sage">Add</button>
+        </form>
+      </article>
+
+      <article class="card panel">
+        <h2>Menu categories</h2>
+        <p class="hint">Chicken, pork, and other filters on the menu. Remove only if no recipe uses it.</p>
+        <ul>
+          <li v-for="item in recipeCategories" :key="item.id">
+            <span>{{ item.label }}</span>
+            <button class="btn btn-ghost" type="button" @click="removeRecipeCategory(item)">Remove</button>
+          </li>
+        </ul>
+        <form class="add" @submit.prevent="addRecipeCategory">
+          <input v-model="recipeCategoryLabel" placeholder="e.g. Seafood" required />
           <button class="btn btn-sage">Add</button>
         </form>
       </article>

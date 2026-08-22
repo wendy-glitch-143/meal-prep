@@ -4,13 +4,17 @@ import { parseVideo } from '../video.js';
 
 const router = Router();
 
+const RECIPE_SELECT = `SELECT r.*, rc.label AS category_label
+  FROM recipes r
+  LEFT JOIN recipe_categories rc ON rc.slug = r.category`;
+
 router.get('/', async (req, res) => {
   try {
-    const mealType = req.query.meal_type;
-    const sql = mealType
-      ? 'SELECT * FROM recipes WHERE meal_type = ? ORDER BY name'
-      : 'SELECT * FROM recipes ORDER BY meal_type, name';
-    const [rows] = mealType ? await pool.query(sql, [mealType]) : await pool.query(sql);
+    const category = req.query.category;
+    const sql = category
+      ? `${RECIPE_SELECT} WHERE r.category = ? ORDER BY r.name`
+      : `${RECIPE_SELECT} ORDER BY r.category, r.name`;
+    const [rows] = category ? await pool.query(sql, [category]) : await pool.query(sql);
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -20,7 +24,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const [recipes] = await pool.query('SELECT * FROM recipes WHERE id = ?', [req.params.id]);
+    const [recipes] = await pool.query(`${RECIPE_SELECT} WHERE r.id = ?`, [req.params.id]);
     if (!recipes[0]) return res.status(404).json({ error: 'Recipe not found' });
 
     const [ingredients] = await pool.query(
@@ -42,7 +46,7 @@ function recipePayload(body) {
   const {
     name,
     description = '',
-    meal_type,
+    category,
     prep_minutes,
     servings = 2,
     emoji = '🍽️',
@@ -51,8 +55,8 @@ function recipePayload(body) {
     ingredients = [],
   } = body || {};
 
-  if (!name || !meal_type) {
-    return { error: 'Name and meal type are required' };
+  if (!name || !category) {
+    return { error: 'Name and category are required' };
   }
 
   const video = String(video_url || '').trim();
@@ -63,7 +67,7 @@ function recipePayload(body) {
   return {
     name: name.trim(),
     description: String(description).trim(),
-    meal_type,
+    category,
     prep_minutes: Number(prep_minutes) || 15,
     servings: Number(servings) || 2,
     emoji: String(emoji).trim() || '🍽️',
@@ -106,30 +110,32 @@ router.post('/', async (req, res) => {
 
   const conn = await pool.getConnection();
   try {
-    const [types] = await conn.query('SELECT slug, color FROM meal_types WHERE slug = ?', [data.meal_type]);
-    if (!types[0]) {
+    const [cats] = await conn.query('SELECT slug, color FROM recipe_categories WHERE slug = ?', [data.category]);
+    if (!cats[0]) {
       conn.release();
-      return res.status(400).json({ error: 'Unknown meal type' });
+      return res.status(400).json({ error: 'Unknown category' });
     }
+    const [meals] = await conn.query('SELECT slug FROM meal_types ORDER BY sort_order, id LIMIT 1');
 
     await conn.beginTransaction();
     const [created] = await conn.query(
-      `INSERT INTO recipes (name, description, meal_type, prep_minutes, servings, emoji, color, video_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO recipes (name, description, meal_type, category, prep_minutes, servings, emoji, color, video_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         data.name,
         data.description,
-        data.meal_type,
+        meals[0]?.slug || 'lunch',
+        data.category,
         data.prep_minutes,
         data.servings,
         data.emoji,
-        data.color || types[0].color,
+        data.color || cats[0].color,
         data.video,
       ]
     );
     await attachIngredients(conn, created.insertId, data.ingredients);
     await conn.commit();
-    const [recipe] = await conn.query('SELECT * FROM recipes WHERE id = ?', [created.insertId]);
+    const [recipe] = await conn.query(`${RECIPE_SELECT} WHERE r.id = ?`, [created.insertId]);
     res.status(201).json(recipe[0]);
   } catch (err) {
     await conn.rollback();
@@ -152,25 +158,25 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Recipe not found' });
     }
 
-    const [types] = await conn.query('SELECT slug, color FROM meal_types WHERE slug = ?', [data.meal_type]);
-    if (!types[0]) {
+    const [cats] = await conn.query('SELECT slug, color FROM recipe_categories WHERE slug = ?', [data.category]);
+    if (!cats[0]) {
       conn.release();
-      return res.status(400).json({ error: 'Unknown meal type' });
+      return res.status(400).json({ error: 'Unknown category' });
     }
 
     await conn.beginTransaction();
     await conn.query(
       `UPDATE recipes
-       SET name = ?, description = ?, meal_type = ?, prep_minutes = ?, servings = ?, emoji = ?, color = ?, video_url = ?
+       SET name = ?, description = ?, category = ?, prep_minutes = ?, servings = ?, emoji = ?, color = ?, video_url = ?
        WHERE id = ?`,
       [
         data.name,
         data.description,
-        data.meal_type,
+        data.category,
         data.prep_minutes,
         data.servings,
         data.emoji,
-        data.color || types[0].color,
+        data.color || cats[0].color,
         data.video,
         req.params.id,
       ]
@@ -178,7 +184,7 @@ router.put('/:id', async (req, res) => {
     await conn.query('DELETE FROM recipe_ingredients WHERE recipe_id = ?', [req.params.id]);
     await attachIngredients(conn, req.params.id, data.ingredients);
     await conn.commit();
-    const [recipe] = await conn.query('SELECT * FROM recipes WHERE id = ?', [req.params.id]);
+    const [recipe] = await conn.query(`${RECIPE_SELECT} WHERE r.id = ?`, [req.params.id]);
     res.json(recipe[0]);
   } catch (err) {
     await conn.rollback();

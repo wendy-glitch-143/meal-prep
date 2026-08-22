@@ -42,7 +42,7 @@ onMounted(async () => {
         <div class="intro">
           <div class="top">
             <span class="emoji">{{ recipe.emoji }}</span>
-            <span class="chip">{{ recipe.meal_type }}</span>
+            <span class="chip">{{ recipe.category_label || recipe.category }}</span>
           </div>
           <h1>{{ recipe.name }}</h1>
           <p class="desc">{{ recipe.description }}</p>
