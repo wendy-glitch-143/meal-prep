@@ -7,9 +7,11 @@ const route = useRoute();
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="app-shell" :class="{ 'has-nav': !route.meta.guest && !route.meta.public }">
     <AppNav v-if="!route.meta.guest && !route.meta.public" />
     <PublicNav v-else-if="route.meta.public" />
-    <router-view />
+    <div class="app-main">
+      <router-view />
+    </div>
   </div>
 </template>

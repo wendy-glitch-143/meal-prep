@@ -20,10 +20,9 @@
   width: min(1120px, calc(100% - 32px));
   margin: 18px auto 0;
   padding: 12px 16px;
-  background: rgba(255, 250, 243, 0.86);
+  background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 18px;
-  backdrop-filter: blur(8px);
 }
 
 .brand {

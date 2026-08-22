@@ -1,48 +1,71 @@
 <script setup>
-import { useRouter } from 'vue-router';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../auth';
 
 const { user, logout } = useAuth();
+const route = useRoute();
 const router = useRouter();
+const open = ref(false);
+const side = ref(null);
 
 function onLogout() {
   logout();
   router.push('/login');
 }
+
+function onDocClick(event) {
+  if (!open.value) return;
+  if (side.value?.contains(event.target) || event.target.closest('.menu-btn')) return;
+  open.value = false;
+}
+
+watch(
+  () => route.path,
+  () => {
+    open.value = false;
+  }
+);
+
+onMounted(() => document.addEventListener('click', onDocClick));
+onUnmounted(() => document.removeEventListener('click', onDocClick));
 </script>
 
 <template>
-  <header class="nav">
+  <header class="app-top">
+    <button class="menu-btn" type="button" aria-label="Open menu" @click="open = !open">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 8h14M5 12h14M5 16h14" />
+      </svg>
+    </button>
     <router-link to="/planner" class="brand">
       <span class="mark">🌿</span>
       <span class="serif">Prepd</span>
     </router-link>
+    <div class="user">
+      <span>{{ user?.username }}</span>
+      <button class="btn btn-ghost" type="button" @click="onLogout">Log out</button>
+    </div>
+  </header>
+  <aside ref="side" class="app-side" :class="{ open }">
     <nav>
       <router-link to="/menu">Menu</router-link>
       <router-link to="/planner">Planner</router-link>
       <router-link to="/grocery">Grocery</router-link>
       <router-link to="/settings">Settings</router-link>
     </nav>
-    <div class="user">
-      <span>{{ user?.username }}</span>
-      <button class="btn btn-ghost" type="button" @click="onLogout">Log out</button>
-    </div>
-  </header>
+  </aside>
 </template>
 
 <style scoped>
-.nav {
+.app-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  width: min(1120px, calc(100% - 32px));
-  margin: 18px auto 0;
-  padding: 12px 16px;
-  background: rgba(255, 250, 243, 0.86);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  backdrop-filter: blur(8px);
+  padding: 12px 20px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
 }
 
 .brand {
@@ -52,18 +75,25 @@ function onLogout() {
   font-size: 1.25rem;
 }
 
-nav {
-  display: flex;
-  gap: 18px;
-}
-
-nav a {
-  color: var(--muted);
-}
-
-nav a.router-link-active {
+.menu-btn {
+  display: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--ink);
-  font-weight: 600;
+  cursor: pointer;
+}
+
+.menu-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
 }
 
 .user {
@@ -73,13 +103,56 @@ nav a.router-link-active {
   color: var(--muted);
 }
 
-@media (max-width: 720px) {
-  .nav {
-    flex-wrap: wrap;
+.app-side {
+  background: var(--paper);
+  border-right: 1px solid var(--line);
+  padding: 18px 12px;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+nav a {
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+nav a.router-link-active {
+  background: var(--chip-bg);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .menu-btn {
+    display: grid;
   }
 
   .user span {
     display: none;
+  }
+
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 21;
+    width: 220px;
+    padding: 18px 12px;
+    background: var(--paper);
+    border-right: 1px solid var(--line);
+    transform: translateX(-100%);
+    transition: transform 0.2s;
+  }
+
+  .app-side.open nav {
+    transform: none;
+    box-shadow: var(--shadow);
   }
 }
 </style>

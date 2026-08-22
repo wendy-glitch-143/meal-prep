@@ -132,6 +132,42 @@ body,
   min-height: 100%;
 }
 
+.app-shell.has-nav {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+}
+
+.app-shell.has-nav .app-top {
+  grid-column: 1 / -1;
+}
+
+.app-shell.has-nav .app-side {
+  grid-row: 2;
+}
+
+.app-shell.has-nav .app-main {
+  grid-row: 2;
+  min-width: 0;
+}
+
+@media (max-width: 800px) {
+  .app-shell.has-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-shell.has-nav .app-side {
+    grid-row: 1;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    background: transparent;
+  }
+}
+
 body {
   background:
     radial-gradient(circle at top right, var(--glow-1), transparent 28%),
