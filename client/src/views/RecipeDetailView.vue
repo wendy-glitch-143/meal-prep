@@ -38,20 +38,26 @@ onMounted(async () => {
     <router-link :to="backTo" class="back">← Back to menu</router-link>
     <p v-if="error" class="error">{{ error }}</p>
     <article v-if="recipe" class="card detail" :style="{ '--accent': recipe.color }">
-      <div class="top">
-        <span class="emoji">{{ recipe.emoji }}</span>
-        <span class="chip">{{ recipe.meal_type }}</span>
+      <div class="header">
+        <div class="intro">
+          <div class="top">
+            <span class="emoji">{{ recipe.emoji }}</span>
+            <span class="chip">{{ recipe.meal_type }}</span>
+          </div>
+          <h1>{{ recipe.name }}</h1>
+          <p class="desc">{{ recipe.description }}</p>
+        </div>
+        <div class="aside">
+          <p class="meta">{{ recipe.prep_minutes }} min · {{ recipe.servings }} servings</p>
+          <a v-if="recipe.video_url" class="video" :href="recipe.video_url" target="_blank" rel="noreferrer">
+            Watch video
+          </a>
+        </div>
       </div>
-      <h1>{{ recipe.name }}</h1>
-      <p class="desc">{{ recipe.description }}</p>
-      <p class="meta">{{ recipe.prep_minutes }} min · {{ recipe.servings }} servings</p>
       <div v-if="!isPublic" class="actions">
         <router-link class="btn btn-ghost" :to="{ path: '/menu', query: { edit: recipe.id } }">Edit</router-link>
         <button class="btn btn-ghost" type="button" @click="removeRecipe">Delete</button>
       </div>
-      <p v-if="recipe.video_url" class="video">
-        <a :href="recipe.video_url" target="_blank" rel="noreferrer">Watch video</a>
-      </p>
       <h2>Ingredients</h2>
       <ul>
         <li v-for="item in recipe.ingredients" :key="item.name">
@@ -70,24 +76,59 @@ onMounted(async () => {
 }
 
 .detail {
-  padding: 32px;
+  max-width: 560px;
+  padding: 28px;
   background:
-    linear-gradient(180deg, var(--accent), transparent 160px),
+    linear-gradient(180deg, var(--accent), transparent 140px),
     var(--paper);
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 24px;
+}
+
+.intro {
+  min-width: 0;
+}
+
+.aside {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .emoji {
-  font-size: 3rem;
+  font-size: 2.2rem;
 }
 
 h1 {
   margin: 8px 0 0;
+  font-size: 1.8rem;
 }
 
 .desc,
 .meta,
 li {
   color: var(--muted);
+}
+
+.meta {
+  margin: 0;
+}
+
+.video {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--sage-dark);
+  font-weight: 600;
 }
 
 ul {
@@ -105,8 +146,13 @@ ul {
   text-decoration: none;
 }
 
-.video a {
-  color: var(--sage-dark);
-  font-weight: 600;
+@media (max-width: 520px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .aside {
+    text-align: left;
+  }
 }
 </style>
