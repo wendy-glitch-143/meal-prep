@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 import VideoEmbed from '../components/VideoEmbed.vue';
+import MenuQr from '../components/MenuQr.vue';
 import { parseVideo } from '../video';
 
 const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯', '🍲', '🐟', '🍋', '🥘', '🍝', '🌮', '🍗', '🍚', '🍞', '🧀', '🍎', '🥕', '🥞', '🍕', '🍜', '🥙', '🍪', '☕'];
@@ -98,9 +99,12 @@ onMounted(async () => {
         <h1>Menu list</h1>
         <p>Add your own recipes, then drop them into the planner.</p>
       </div>
-      <button class="btn btn-primary" type="button" @click="openForm">
-        {{ showForm ? 'Cancel' : '+ Add recipe' }}
-      </button>
+      <div class="hero-actions">
+        <MenuQr />
+        <button class="btn btn-primary" type="button" @click="openForm">
+          {{ showForm ? 'Cancel' : '+ Add recipe' }}
+        </button>
+      </div>
     </header>
 
     <form v-if="showForm" class="card form" @submit.prevent="saveRecipe">
@@ -221,6 +225,12 @@ h1 {
 .hero p:last-child {
   margin: 0;
   color: var(--muted);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .form {

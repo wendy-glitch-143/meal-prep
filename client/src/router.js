@@ -7,6 +7,7 @@ import RecipeDetailView from './views/RecipeDetailView.vue';
 import PlannerView from './views/PlannerView.vue';
 import GroceryView from './views/GroceryView.vue';
 import SettingsView from './views/SettingsView.vue';
+import PublicMenuView from './views/PublicMenuView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,6 +15,8 @@ const router = createRouter({
     { path: '/', redirect: '/planner' },
     { path: '/login', component: LoginView, meta: { guest: true } },
     { path: '/signup', component: SignupView, meta: { guest: true } },
+    { path: '/view', component: PublicMenuView, meta: { public: true } },
+    { path: '/view/:id', component: RecipeDetailView, meta: { public: true } },
     { path: '/menu', component: MenuView, meta: { auth: true } },
     { path: '/menu/:id', component: RecipeDetailView, meta: { auth: true } },
     { path: '/planner', component: PlannerView, meta: { auth: true } },

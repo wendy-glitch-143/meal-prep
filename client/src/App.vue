@@ -7,7 +7,7 @@ const route = useRoute();
 
 <template>
   <div class="app-shell">
-    <AppNav v-if="!route.meta.guest" />
+    <AppNav v-if="!route.meta.guest && !route.meta.public" />
     <router-view />
   </div>
 </template>

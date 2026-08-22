@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../api';
 import VideoEmbed from '../components/VideoEmbed.vue';
@@ -7,10 +7,15 @@ import VideoEmbed from '../components/VideoEmbed.vue';
 const route = useRoute();
 const recipe = ref(null);
 const error = ref('');
+const isPublic = computed(() => Boolean(route.meta.public));
+const backTo = computed(() => (isPublic.value ? '/view' : '/menu'));
 
 onMounted(async () => {
   try {
-    recipe.value = await api(`/api/recipes/${route.params.id}`);
+    const path = isPublic.value
+      ? `/api/public/recipes/${route.params.id}`
+      : `/api/recipes/${route.params.id}`;
+    recipe.value = await api(path);
   } catch (err) {
     error.value = err.message;
   }
@@ -19,7 +24,7 @@ onMounted(async () => {
 
 <template>
   <main class="page">
-    <router-link to="/menu" class="back">← Back to menu</router-link>
+    <router-link :to="backTo" class="back">← Back to menu</router-link>
     <p v-if="error" class="error">{{ error }}</p>
     <article v-if="recipe" class="card detail" :style="{ '--accent': recipe.color }">
       <div class="top">
