@@ -13,6 +13,7 @@ const recipes = ref([]);
 const recipeCategories = ref([]);
 const categories = ref([]);
 const filter = ref('all');
+const sort = ref('alpha');
 const error = ref('');
 const showForm = ref(false);
 const saving = ref(false);
@@ -32,9 +33,15 @@ function blankForm() {
   };
 }
 
-const visible = computed(() =>
-  filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.category === filter.value)
-);
+const visible = computed(() => {
+  const rows = filter.value === 'all' ? recipes.value : recipes.value.filter((r) => r.category === filter.value);
+  return [...rows].sort((a, b) => {
+    if (sort.value === 'latest') {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    }
+    return a.name.localeCompare(b.name);
+  });
+});
 
 async function load() {
   const [recipeRows, settings] = await Promise.all([api('/api/recipes'), api('/api/settings')]);
@@ -238,20 +245,30 @@ onMounted(async () => {
       </button>
     </form>
 
-    <div class="filters">
-      <button class="btn" :class="filter === 'all' ? 'btn-sage' : 'btn-ghost'" type="button" @click="filter = 'all'">
-        All
-      </button>
-      <button
-        v-for="cat in recipeCategories"
-        :key="cat.slug"
-        class="btn"
-        :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
-        type="button"
-        @click="filter = cat.slug"
-      >
-        {{ cat.label }}
-      </button>
+    <div class="toolbar">
+      <div class="filters">
+        <button class="btn" :class="filter === 'all' ? 'btn-sage' : 'btn-ghost'" type="button" @click="filter = 'all'">
+          All
+        </button>
+        <button
+          v-for="cat in recipeCategories"
+          :key="cat.slug"
+          class="btn"
+          :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
+          type="button"
+          @click="filter = cat.slug"
+        >
+          {{ cat.label }}
+        </button>
+      </div>
+      <div class="filters">
+        <button class="btn" :class="sort === 'alpha' ? 'btn-sage' : 'btn-ghost'" type="button" @click="sort = 'alpha'">
+          A–Z
+        </button>
+        <button class="btn" :class="sort === 'latest' ? 'btn-sage' : 'btn-ghost'" type="button" @click="sort = 'latest'">
+          Latest
+        </button>
+      </div>
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -364,11 +381,18 @@ h1 {
   margin-top: 14px;
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 22px;
 }
 
 .grid {
