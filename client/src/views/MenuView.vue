@@ -100,6 +100,19 @@ async function startEdit(recipe) {
   }
 }
 
+async function toggleAvailable(recipe) {
+  error.value = '';
+  try {
+    const data = await api(`/api/recipes/${recipe.id}/available`, {
+      method: 'PATCH',
+      body: JSON.stringify({ available: !Number(recipe.available) }),
+    });
+    recipe.available = data.available;
+  } catch (err) {
+    error.value = err.message;
+  }
+}
+
 async function removeRecipe(recipe) {
   if (!confirm(`Delete “${recipe.name}”?`)) return;
   error.value = '';
@@ -261,6 +274,9 @@ onMounted(async () => {
           <RecipeCard :recipe="recipe" />
         </router-link>
         <div class="card-actions">
+          <button class="btn btn-ghost" type="button" @click="toggleAvailable(recipe)">
+            {{ Number(recipe.available) ? 'Available' : 'Unavailable' }}
+          </button>
           <button class="btn btn-ghost" type="button" @click="startEdit(recipe)">Edit</button>
           <button class="btn btn-ghost" type="button" @click="removeRecipe(recipe)">Delete</button>
         </div>
@@ -379,6 +395,7 @@ h1 {
 
 .card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

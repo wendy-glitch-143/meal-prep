@@ -54,7 +54,9 @@ CREATE TABLE recipes (
   servings INT NOT NULL DEFAULT 2,
   emoji VARCHAR(16) NOT NULL,
   color VARCHAR(16) NOT NULL,
-  video_url VARCHAR(500) NULL
+  video_url VARCHAR(500) NULL,
+  available TINYINT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE ingredients (

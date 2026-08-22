@@ -27,6 +27,24 @@ export async function ensureSchema() {
     // column already exists
   }
 
+  try {
+    await pool.query('ALTER TABLE recipes ADD COLUMN available TINYINT NOT NULL DEFAULT 1');
+  } catch {
+    // column already exists
+  }
+
+  try {
+    await pool.query('ALTER TABLE recipes ADD COLUMN created_at TIMESTAMP NULL');
+  } catch {
+    // column already exists
+  }
+
+  try {
+    await pool.query("UPDATE recipes SET created_at = '2020-01-01 00:00:00' WHERE created_at IS NULL");
+  } catch {
+    // ignore if column is missing
+  }
+
   for (const [slug, label, color, sort] of DEFAULT_CATEGORIES) {
     await pool.query(
       `INSERT IGNORE INTO recipe_categories (slug, label, color, is_default, sort_order)

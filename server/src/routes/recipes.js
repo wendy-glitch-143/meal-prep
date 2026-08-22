@@ -119,8 +119,8 @@ router.post('/', async (req, res) => {
 
     await conn.beginTransaction();
     const [created] = await conn.query(
-      `INSERT INTO recipes (name, description, meal_type, category, prep_minutes, servings, emoji, color, video_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO recipes (name, description, meal_type, category, prep_minutes, servings, emoji, color, video_url, available, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())`,
       [
         data.name,
         data.description,
@@ -192,6 +192,19 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Could not update recipe' });
   } finally {
     conn.release();
+  }
+});
+
+router.patch('/:id/available', async (req, res) => {
+  const available = req.body?.available ? 1 : 0;
+  try {
+    const [existing] = await pool.query('SELECT id FROM recipes WHERE id = ?', [req.params.id]);
+    if (!existing[0]) return res.status(404).json({ error: 'Recipe not found' });
+    await pool.query('UPDATE recipes SET available = ? WHERE id = ?', [available, req.params.id]);
+    res.json({ available });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update availability' });
   }
 });
 

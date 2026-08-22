@@ -9,6 +9,7 @@ router.get('/menu', async (_req, res) => {
       `SELECT r.*, rc.label AS category_label
        FROM recipes r
        LEFT JOIN recipe_categories rc ON rc.slug = r.category
+       WHERE r.available = 1
        ORDER BY r.category, r.name`
     );
     const [recipeCategories] = await pool.query(
