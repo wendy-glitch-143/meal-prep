@@ -13,7 +13,7 @@ router.get('/menu', async (_req, res) => {
        ORDER BY r.category, r.name`
     );
     const [recipeCategories] = await pool.query(
-      'SELECT slug, label FROM recipe_categories ORDER BY sort_order, id'
+      'SELECT slug, label, icon FROM recipe_categories ORDER BY sort_order, id'
     );
     res.json({ recipes, recipeCategories });
   } catch (err) {
@@ -45,6 +45,42 @@ router.get('/recipes/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not load recipe' });
+  }
+});
+
+router.get('/plans/:weekStart', async (req, res) => {
+  const { weekStart } = req.params;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) {
+    return res.status(400).json({ error: 'weekStart must be YYYY-MM-DD' });
+  }
+
+  try {
+    const [mealTypes] = await pool.query(
+      'SELECT slug, label, color FROM meal_types ORDER BY sort_order, id'
+    );
+    const [plans] = await pool.query(
+      'SELECT id FROM meal_plans WHERE week_start = ? ORDER BY id DESC LIMIT 1',
+      [weekStart]
+    );
+
+    if (!plans[0]) {
+      return res.json({ weekStart, slots: [], mealTypes });
+    }
+
+    const [slots] = await pool.query(
+      `SELECT ps.day_of_week, ps.meal_type, ps.recipe_id,
+              r.name, r.emoji, r.color, r.prep_minutes
+       FROM plan_slots ps
+       JOIN recipes r ON r.id = ps.recipe_id
+       WHERE ps.meal_plan_id = ?
+       ORDER BY ps.day_of_week, FIELD(ps.meal_type, 'breakfast', 'lunch', 'dinner')`,
+      [plans[0].id]
+    );
+
+    res.json({ weekStart, slots, mealTypes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load meal plan' });
   }
 });
 

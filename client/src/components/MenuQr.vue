@@ -33,7 +33,7 @@ watch(publicUrl, makeQr);
   <div v-if="open" class="overlay" @click.self="open = false">
     <section class="card sheet">
       <h2>Public menu</h2>
-      <p>Guests scan this to view the menu list. No login needed.</p>
+      <p>Guests scan this to view the menu and planner. No login or edits.</p>
       <img v-if="dataUrl" :src="dataUrl" alt="QR code for the public menu" />
       <code>{{ publicUrl }}</code>
       <div class="actions">

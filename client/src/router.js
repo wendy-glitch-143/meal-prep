@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/login', component: LoginView, meta: { guest: true } },
     { path: '/signup', component: SignupView, meta: { guest: true } },
     { path: '/view', component: PublicMenuView, meta: { public: true } },
+    { path: '/view/planner', component: PlannerView, meta: { public: true } },
     { path: '/view/:id', component: RecipeDetailView, meta: { public: true } },
     { path: '/menu', component: MenuView, meta: { auth: true } },
     { path: '/menu/:id', component: RecipeDetailView, meta: { auth: true } },

@@ -1,10 +1,10 @@
 import pool from './db.js';
 
 const DEFAULT_CATEGORIES = [
-  ['chicken', 'Chicken', '#E8C4A0', 1],
-  ['pork', 'Pork', '#E4B4A4', 2],
-  ['beef', 'Beef', '#D4B896', 3],
-  ['vegetables', 'Vegetables', '#C9D4B8', 4],
+  ['chicken', 'Chicken', '#E8C4A0', 1, 'chicken'],
+  ['pork', 'Pork', '#E4B4A4', 2, 'pork'],
+  ['beef', 'Beef', '#D4B896', 3, 'beef'],
+  ['vegetables', 'Vegetables', '#C9D4B8', 4, 'vegan'],
 ];
 
 export async function ensureSchema() {
@@ -14,6 +14,7 @@ export async function ensureSchema() {
       slug VARCHAR(50) NOT NULL UNIQUE,
       label VARCHAR(80) NOT NULL,
       color VARCHAR(16) NOT NULL DEFAULT '#E8D5B7',
+      icon VARCHAR(50) NOT NULL DEFAULT 'sides',
       is_default TINYINT NOT NULL DEFAULT 0,
       sort_order INT NOT NULL DEFAULT 0
     )
@@ -45,11 +46,21 @@ export async function ensureSchema() {
     // ignore if column is missing
   }
 
-  for (const [slug, label, color, sort] of DEFAULT_CATEGORIES) {
+  try {
+    await pool.query("ALTER TABLE recipe_categories ADD COLUMN icon VARCHAR(50) NOT NULL DEFAULT 'sides'");
+  } catch {
+    // column already exists
+  }
+
+  for (const [slug, label, color, sort, icon] of DEFAULT_CATEGORIES) {
     await pool.query(
-      `INSERT IGNORE INTO recipe_categories (slug, label, color, is_default, sort_order)
-       VALUES (?, ?, ?, 1, ?)`,
-      [slug, label, color, sort]
+      `INSERT IGNORE INTO recipe_categories (slug, label, color, icon, is_default, sort_order)
+       VALUES (?, ?, ?, ?, 1, ?)`,
+      [slug, label, color, icon, sort]
+    );
+    await pool.query(
+      "UPDATE recipe_categories SET icon = ? WHERE slug = ? AND (icon = '' OR icon = 'sides') AND is_default = 1",
+      [icon, slug]
     );
   }
 }

@@ -3,6 +3,27 @@ import pool from '../db.js';
 
 const router = Router();
 const EXTRA_COLORS = ['#C8D8E4', '#E4B4A4', '#D4B896', '#B8D4C8', '#F4C7C3'];
+const CATEGORY_ICONS = [
+  'book',
+  'breakfast',
+  'lunch',
+  'dessert',
+  'dinner',
+  'sides',
+  'snacks',
+  'soups',
+  'vegan',
+  'chicken',
+  'pork',
+  'beef',
+  'fish',
+  'pasta',
+  'rice',
+];
+
+function categoryIcon(name) {
+  return CATEGORY_ICONS.includes(name) ? name : 'sides';
+}
 
 function slugify(label) {
   return String(label)
@@ -75,6 +96,7 @@ router.delete('/meal-types/:id', async (req, res) => {
 router.post('/recipe-categories', async (req, res) => {
   const label = String(req.body?.label || '').trim();
   const slug = slugify(label);
+  const icon = categoryIcon(req.body?.icon);
   if (!slug) return res.status(400).json({ error: 'Category name is required' });
 
   try {
@@ -83,8 +105,8 @@ router.post('/recipe-categories', async (req, res) => {
     );
     const color = EXTRA_COLORS[maxSort % EXTRA_COLORS.length];
     await pool.query(
-      'INSERT INTO recipe_categories (slug, label, color, is_default, sort_order) VALUES (?, ?, ?, 0, ?)',
-      [slug, label, color, maxSort + 1]
+      'INSERT INTO recipe_categories (slug, label, color, icon, is_default, sort_order) VALUES (?, ?, ?, ?, 0, ?)',
+      [slug, label, color, icon, maxSort + 1]
     );
     const [rows] = await pool.query('SELECT * FROM recipe_categories WHERE slug = ?', [slug]);
     res.status(201).json(rows[0]);
@@ -94,6 +116,20 @@ router.post('/recipe-categories', async (req, res) => {
     }
     console.error(err);
     res.status(500).json({ error: 'Could not add category' });
+  }
+});
+
+router.patch('/recipe-categories/:id', async (req, res) => {
+  const icon = categoryIcon(req.body?.icon);
+  try {
+    const [rows] = await pool.query('SELECT * FROM recipe_categories WHERE id = ?', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Category not found' });
+    await pool.query('UPDATE recipe_categories SET icon = ? WHERE id = ?', [icon, req.params.id]);
+    const [updated] = await pool.query('SELECT * FROM recipe_categories WHERE id = ?', [req.params.id]);
+    res.json(updated[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update category' });
   }
 });
 

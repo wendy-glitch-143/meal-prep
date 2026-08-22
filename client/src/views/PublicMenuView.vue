@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
+import CategoryFilters from '../components/CategoryFilters.vue';
 
 const recipes = ref([]);
 const recipeCategories = ref([]);
@@ -33,21 +34,7 @@ onMounted(async () => {
       </div>
     </header>
 
-    <div class="filters">
-      <button class="btn" :class="filter === 'all' ? 'btn-sage' : 'btn-ghost'" type="button" @click="filter = 'all'">
-        All
-      </button>
-      <button
-        v-for="cat in recipeCategories"
-        :key="cat.slug"
-        class="btn"
-        :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
-        type="button"
-        @click="filter = cat.slug"
-      >
-        {{ cat.label }}
-      </button>
-    </div>
+    <CategoryFilters v-model="filter" :categories="recipeCategories" />
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-else-if="!visible.length" class="empty card">No dishes on the menu yet.</p>
@@ -80,13 +67,6 @@ h1 {
 .hero p:last-child {
   margin: 0;
   color: var(--muted);
-}
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 22px;
 }
 
 .grid {

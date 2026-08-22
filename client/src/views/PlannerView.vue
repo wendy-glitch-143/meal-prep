@@ -2,12 +2,13 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
-import { DAYS, addDays, formatDay, lastWeek, rememberWeek, toDateKey } from '../week';
+import { DAYS, addDays, formatDay, lastWeek, mondayOf, rememberWeek, toDateKey } from '../week';
 
 const route = useRoute();
 const router = useRouter();
+const isPublic = computed(() => Boolean(route.meta.public));
 
-const weekStart = ref(route.query.week || lastWeek());
+const weekStart = ref(route.query.week || (route.meta.public ? toDateKey(mondayOf()) : lastWeek()));
 const weekDate = computed(() => new Date(`${weekStart.value}T00:00:00`));
 const view = ref('week');
 const focusDay = ref(0);
@@ -35,14 +36,19 @@ const visibleDays = computed(() =>
 async function loadPlan() {
   error.value = '';
   try {
-    const data = await api(`/api/plans/${weekStart.value}`);
+    const path = isPublic.value
+      ? `/api/public/plans/${weekStart.value}`
+      : `/api/plans/${weekStart.value}`;
+    const data = await api(path);
     slots.value = data.slots || [];
+    if (data.mealTypes) mealTypes.value = data.mealTypes;
   } catch (err) {
     error.value = err.message;
   }
 }
 
 async function savePlan(nextSlots) {
+  if (isPublic.value) return;
   saving.value = true;
   try {
     await api(`/api/plans/${weekStart.value}`, {
@@ -62,6 +68,7 @@ function shiftWeek(delta) {
 }
 
 function openPicker(day, meal) {
+  if (isPublic.value) return;
   picker.value = { day, meal };
 }
 
@@ -87,11 +94,13 @@ function clearSlot(day, meal) {
 }
 
 onMounted(async () => {
-  rememberWeek(weekStart.value);
+  if (!isPublic.value) rememberWeek(weekStart.value);
   try {
-    const [recipeRows, settings] = await Promise.all([api('/api/recipes'), api('/api/settings')]);
-    recipes.value = recipeRows;
-    mealTypes.value = settings.mealTypes || [];
+    if (!isPublic.value) {
+      const [recipeRows, settings] = await Promise.all([api('/api/recipes'), api('/api/settings')]);
+      recipes.value = recipeRows;
+      mealTypes.value = settings.mealTypes || [];
+    }
     await loadPlan();
   } catch (err) {
     error.value = err.message;
@@ -99,7 +108,7 @@ onMounted(async () => {
 });
 
 watch(weekStart, () => {
-  rememberWeek(weekStart.value);
+  if (!isPublic.value) rememberWeek(weekStart.value);
   router.replace({ query: { week: weekStart.value } });
   loadPlan();
 });
@@ -110,8 +119,14 @@ watch(weekStart, () => {
     <header class="hero">
       <div>
         <p class="eyebrow">Daily & weekly prep</p>
-        <h1>Your planner</h1>
-        <p>Tap a slot to add a recipe. The grocery list updates from this week.</p>
+        <h1>{{ isPublic ? 'Planner' : 'Your planner' }}</h1>
+        <p>
+          {{
+            isPublic
+              ? 'This week’s meals. View only.'
+              : 'Tap a slot to add a recipe. The grocery list updates from this week.'
+          }}
+        </p>
       </div>
       <div class="controls">
         <button class="btn btn-ghost" type="button" @click="shiftWeek(-1)">←</button>
@@ -140,7 +155,7 @@ watch(weekStart, () => {
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
-    <p v-if="saving" class="saving">Saving…</p>
+    <p v-if="!isPublic && saving" class="saving">Saving…</p>
 
     <section class="planner" :class="view">
       <div v-for="day in visibleDays" :key="day" class="day-col card">
@@ -148,8 +163,16 @@ watch(weekStart, () => {
         <small>{{ formatDay(addDays(weekDate, day)) }}</small>
         <div v-for="meal in mealTypes" :key="meal.slug" class="slot">
           <span class="meal-label">{{ meal.label }}</span>
+          <router-link
+            v-if="isPublic && slotMap[`${day}-${meal.slug}`]"
+            class="filled"
+            :style="{ background: slotMap[`${day}-${meal.slug}`].color }"
+            :to="`/view/${slotMap[`${day}-${meal.slug}`].recipe_id}`"
+          >
+            <span>{{ slotMap[`${day}-${meal.slug}`].emoji }} {{ slotMap[`${day}-${meal.slug}`].name }}</span>
+          </router-link>
           <button
-            v-if="slotMap[`${day}-${meal.slug}`]"
+            v-else-if="slotMap[`${day}-${meal.slug}`]"
             class="filled"
             type="button"
             :style="{ background: slotMap[`${day}-${meal.slug}`].color }"
@@ -158,12 +181,13 @@ watch(weekStart, () => {
             <span>{{ slotMap[`${day}-${meal.slug}`].emoji }} {{ slotMap[`${day}-${meal.slug}`].name }}</span>
             <em @click.stop="clearSlot(day, meal.slug)">✕</em>
           </button>
+          <p v-else-if="isPublic" class="empty-slot static">—</p>
           <button v-else class="empty-slot" type="button" @click="openPicker(day, meal.slug)">+ Add meal</button>
         </div>
       </div>
     </section>
 
-    <div v-if="picker" class="overlay" @click.self="picker = null">
+    <div v-if="!isPublic && picker" class="overlay" @click.self="picker = null">
       <section class="card picker">
         <h2>Choose a recipe</h2>
         <p v-if="!pickerRecipes.length" class="empty">
@@ -283,6 +307,13 @@ h3 {
   border: 1px dashed var(--line);
   background: var(--input);
   color: var(--muted);
+}
+
+.empty-slot.static {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  cursor: default;
 }
 
 .overlay {

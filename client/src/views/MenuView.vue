@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 import MenuQr from '../components/MenuQr.vue';
+import CategoryFilters from '../components/CategoryFilters.vue';
 
 const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯', '🍲', '🐟', '🍋', '🥘', '🍝', '🌮', '🍗', '🍚', '🍞', '🧀', '🍎', '🥕', '🥞', '🍕', '🍜', '🥙', '🍪', '☕'];
 
@@ -260,21 +261,7 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
     </form>
 
     <div class="toolbar">
-      <div class="filters">
-        <button class="btn" :class="filter === 'all' ? 'btn-sage' : 'btn-ghost'" type="button" @click="filter = 'all'">
-          All
-        </button>
-        <button
-          v-for="cat in recipeCategories"
-          :key="cat.slug"
-          class="btn"
-          :class="filter === cat.slug ? 'btn-sage' : 'btn-ghost'"
-          type="button"
-          @click="filter = cat.slug"
-        >
-          {{ cat.label }}
-        </button>
-      </div>
+      <CategoryFilters v-model="filter" :categories="recipeCategories" />
       <div ref="sortMenu" class="sort">
         <button class="sort-btn" type="button" aria-label="Sort" @click.stop="showSort = !showSort">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -400,16 +387,13 @@ h1 {
 
 .toolbar {
   display: flex;
-  flex-wrap: wrap;
+  align-items: start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 22px;
 }
 
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.toolbar :deep(.cats) {
+  margin-bottom: 22px;
 }
 
 .sort {

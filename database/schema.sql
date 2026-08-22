@@ -40,6 +40,7 @@ CREATE TABLE recipe_categories (
   slug VARCHAR(50) NOT NULL UNIQUE,
   label VARCHAR(80) NOT NULL,
   color VARCHAR(16) NOT NULL DEFAULT '#E8D5B7',
+  icon VARCHAR(50) NOT NULL DEFAULT 'sides',
   is_default TINYINT NOT NULL DEFAULT 0,
   sort_order INT NOT NULL DEFAULT 0
 );

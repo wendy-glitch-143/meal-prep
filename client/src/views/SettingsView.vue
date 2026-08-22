@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../api';
 import { useTheme } from '../theme';
+import { CATEGORY_ICONS } from '../categoryIcons';
+import CategoryIcon from '../components/CategoryIcon.vue';
 
 const { theme, themes, applyTheme } = useTheme();
 const mealTypes = ref([]);
@@ -9,6 +11,8 @@ const recipeCategories = ref([]);
 const categories = ref([]);
 const mealLabel = ref('');
 const recipeCategoryLabel = ref('');
+const recipeCategoryIcon = ref('sides');
+const pickingId = ref(null);
 const categoryLabel = ref('');
 const error = ref('');
 
@@ -48,9 +52,24 @@ async function addRecipeCategory() {
   try {
     await api('/api/settings/recipe-categories', {
       method: 'POST',
-      body: JSON.stringify({ label: recipeCategoryLabel.value }),
+      body: JSON.stringify({ label: recipeCategoryLabel.value, icon: recipeCategoryIcon.value }),
     });
     recipeCategoryLabel.value = '';
+    recipeCategoryIcon.value = 'sides';
+    await load();
+  } catch (err) {
+    error.value = err.message;
+  }
+}
+
+async function setRecipeCategoryIcon(item, icon) {
+  error.value = '';
+  try {
+    await api(`/api/settings/recipe-categories/${item.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ icon }),
+    });
+    pickingId.value = null;
     await load();
   } catch (err) {
     error.value = err.message;
@@ -152,13 +171,42 @@ onMounted(async () => {
 
       <article class="card panel">
         <h2>Menu categories</h2>
-        <p class="hint">Chicken, pork, and other filters on the menu. Remove only if no recipe uses it.</p>
+        <p class="hint">Pick an icon for each filter on the menu. Remove only if no recipe uses it.</p>
         <ul>
           <li v-for="item in recipeCategories" :key="item.id">
-            <span>{{ item.label }}</span>
+            <div class="cat-row">
+              <button class="icon-btn" type="button" :title="'Change icon'" @click="pickingId = pickingId === item.id ? null : item.id">
+                <CategoryIcon :name="item.icon" />
+              </button>
+              <span>{{ item.label }}</span>
+            </div>
             <button class="btn btn-ghost" type="button" @click="removeRecipeCategory(item)">Remove</button>
+            <div v-if="pickingId === item.id" class="icon-grid">
+              <button
+                v-for="icon in CATEGORY_ICONS"
+                :key="icon"
+                class="icon-btn"
+                :class="{ selected: item.icon === icon }"
+                type="button"
+                @click="setRecipeCategoryIcon(item, icon)"
+              >
+                <CategoryIcon :name="icon" />
+              </button>
+            </div>
           </li>
         </ul>
+        <div class="icon-grid">
+          <button
+            v-for="icon in CATEGORY_ICONS"
+            :key="icon"
+            class="icon-btn"
+            :class="{ selected: recipeCategoryIcon === icon }"
+            type="button"
+            @click="recipeCategoryIcon = icon"
+          >
+            <CategoryIcon :name="icon" />
+          </button>
+        </div>
         <form class="add" @submit.prevent="addRecipeCategory">
           <input v-model="recipeCategoryLabel" placeholder="e.g. Seafood" required />
           <button class="btn btn-sage">Add</button>
@@ -263,10 +311,43 @@ ul {
 
 li {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
   border-top: 1px solid var(--line);
+}
+
+.cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--input);
+  color: var(--ink);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.icon-btn.selected {
+  border-color: var(--terracotta);
+  color: var(--terracotta);
 }
 
 .add {
