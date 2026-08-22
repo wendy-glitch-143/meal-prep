@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
@@ -14,6 +14,8 @@ const recipeCategories = ref([]);
 const categories = ref([]);
 const filter = ref('all');
 const sort = ref('alpha');
+const showSort = ref(false);
+const sortMenu = ref(null);
 const error = ref('');
 const showForm = ref(false);
 const saving = ref(false);
@@ -150,7 +152,17 @@ async function saveRecipe() {
   }
 }
 
+function setSort(value) {
+  sort.value = value;
+  showSort.value = false;
+}
+
+function onDocClick(event) {
+  if (!sortMenu.value?.contains(event.target)) showSort.value = false;
+}
+
 onMounted(async () => {
+  document.addEventListener('click', onDocClick);
   try {
     await load();
     if (route.query.edit) {
@@ -161,6 +173,8 @@ onMounted(async () => {
     error.value = err.message;
   }
 });
+
+onUnmounted(() => document.removeEventListener('click', onDocClick));
 </script>
 
 <template>
@@ -261,13 +275,16 @@ onMounted(async () => {
           {{ cat.label }}
         </button>
       </div>
-      <div class="filters">
-        <button class="btn" :class="sort === 'alpha' ? 'btn-sage' : 'btn-ghost'" type="button" @click="sort = 'alpha'">
-          A–Z
+      <div ref="sortMenu" class="sort">
+        <button class="sort-btn" type="button" aria-label="Sort" @click.stop="showSort = !showSort">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h10M4 17h6" />
+          </svg>
         </button>
-        <button class="btn" :class="sort === 'latest' ? 'btn-sage' : 'btn-ghost'" type="button" @click="sort = 'latest'">
-          Latest
-        </button>
+        <div v-if="showSort" class="sort-menu">
+          <button type="button" :class="{ active: sort === 'alpha' }" @click="setSort('alpha')">A–Z</button>
+          <button type="button" :class="{ active: sort === 'latest' }" @click="setSort('latest')">Latest</button>
+        </div>
       </div>
     </div>
 
@@ -393,6 +410,61 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.sort {
+  position: relative;
+}
+
+.sort-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.sort-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 2;
+  min-width: 120px;
+  padding: 6px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.sort-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sort-menu button.active,
+.sort-menu button:hover {
+  background: var(--chip-bg);
 }
 
 .grid {
