@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 import VideoEmbed from '../components/VideoEmbed.vue';
@@ -8,6 +9,8 @@ import { parseVideo } from '../video';
 
 const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯', '🍲', '🐟', '🍋', '🥘', '🍝', '🌮', '🍗', '🍚', '🍞', '🧀', '🍎', '🥕', '🥞', '🍕', '🍜', '🥙', '🍪', '☕'];
 
+const route = useRoute();
+const router = useRouter();
 const recipes = ref([]);
 const mealTypes = ref([]);
 const categories = ref([]);
@@ -15,6 +18,7 @@ const filter = ref('all');
 const error = ref('');
 const showForm = ref(false);
 const saving = ref(false);
+const editingId = ref(null);
 const form = ref(blankForm());
 
 function blankForm() {
@@ -54,9 +58,60 @@ function removeIngredientRow(index) {
   form.value.ingredients.splice(index, 1);
 }
 
-function openForm() {
+function closeForm() {
+  editingId.value = null;
   form.value = blankForm();
-  showForm.value = !showForm.value;
+  showForm.value = false;
+}
+
+function openForm() {
+  if (showForm.value) {
+    closeForm();
+    return;
+  }
+  editingId.value = null;
+  form.value = blankForm();
+  showForm.value = true;
+}
+
+async function startEdit(recipe) {
+  error.value = '';
+  try {
+    const full = await api(`/api/recipes/${recipe.id}`);
+    editingId.value = full.id;
+    form.value = {
+      name: full.name,
+      description: full.description || '',
+      meal_type: full.meal_type,
+      prep_minutes: full.prep_minutes,
+      servings: full.servings,
+      emoji: full.emoji || '🍽️',
+      video_url: full.video_url || '',
+      ingredients: full.ingredients?.length
+        ? full.ingredients.map((item) => ({
+            name: item.name,
+            quantity: Number(item.quantity),
+            unit: item.unit,
+            category: item.category || categories.value[0]?.slug || 'produce',
+          }))
+        : [{ name: '', quantity: 1, unit: 'count', category: categories.value[0]?.slug || 'produce' }],
+    };
+    showForm.value = true;
+  } catch (err) {
+    error.value = err.message;
+  }
+}
+
+async function removeRecipe(recipe) {
+  if (!confirm(`Delete “${recipe.name}”?`)) return;
+  error.value = '';
+  try {
+    await api(`/api/recipes/${recipe.id}`, { method: 'DELETE' });
+    if (editingId.value === recipe.id) closeForm();
+    await load();
+  } catch (err) {
+    error.value = err.message;
+  }
 }
 
 async function saveRecipe() {
@@ -64,16 +119,23 @@ async function saveRecipe() {
   saving.value = true;
   try {
     const meal = mealTypes.value.find((m) => m.slug === form.value.meal_type);
-    await api('/api/recipes', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...form.value,
-        color: meal?.color,
-        ingredients: form.value.ingredients.filter((item) => item.name.trim()),
-      }),
-    });
-    form.value = blankForm();
-    showForm.value = false;
+    const payload = {
+      ...form.value,
+      color: meal?.color,
+      ingredients: form.value.ingredients.filter((item) => item.name.trim()),
+    };
+    if (editingId.value) {
+      await api(`/api/recipes/${editingId.value}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    } else {
+      await api('/api/recipes', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    closeForm();
     await load();
   } catch (err) {
     error.value = err.message;
@@ -85,6 +147,10 @@ async function saveRecipe() {
 onMounted(async () => {
   try {
     await load();
+    if (route.query.edit) {
+      await startEdit({ id: route.query.edit });
+      router.replace({ path: '/menu' });
+    }
   } catch (err) {
     error.value = err.message;
   }
@@ -108,7 +174,7 @@ onMounted(async () => {
     </header>
 
     <form v-if="showForm" class="card form" @submit.prevent="saveRecipe">
-      <h2>New recipe</h2>
+      <h2>{{ editingId ? 'Edit recipe' : 'New recipe' }}</h2>
       <div class="field">
         <label for="name">Name</label>
         <input id="name" v-model="form.name" required />
@@ -170,7 +236,7 @@ onMounted(async () => {
       </div>
       <button class="btn btn-ghost" type="button" @click="addIngredientRow">+ Ingredient</button>
       <button class="btn btn-sage save" :disabled="saving">
-        {{ saving ? 'Saving…' : 'Save recipe' }}
+        {{ saving ? 'Saving…' : editingId ? 'Update recipe' : 'Save recipe' }}
       </button>
     </form>
 
@@ -193,9 +259,15 @@ onMounted(async () => {
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="!visible.length" class="empty card">No recipes yet. Add one to start planning.</p>
     <section class="grid">
-      <router-link v-for="recipe in visible" :key="recipe.id" :to="`/menu/${recipe.id}`">
-        <RecipeCard :recipe="recipe" />
-      </router-link>
+      <div v-for="recipe in visible" :key="recipe.id" class="menu-item">
+        <router-link :to="`/menu/${recipe.id}`">
+          <RecipeCard :recipe="recipe" />
+        </router-link>
+        <div class="card-actions">
+          <button class="btn btn-ghost" type="button" @click="startEdit(recipe)">Edit</button>
+          <button class="btn btn-ghost" type="button" @click="removeRecipe(recipe)">Delete</button>
+        </div>
+      </div>
     </section>
   </main>
 </template>
@@ -300,6 +372,22 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 16px;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-actions .btn {
+  flex: 1;
+  padding: 8px 12px;
 }
 
 @media (max-width: 720px) {
