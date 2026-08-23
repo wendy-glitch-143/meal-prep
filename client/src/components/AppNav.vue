@@ -49,10 +49,31 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
   </header>
   <aside ref="side" class="app-side" :class="{ open }">
     <nav>
-      <router-link to="/menu">Menu</router-link>
-      <router-link to="/planner">Planner</router-link>
-      <router-link to="/grocery">Grocery</router-link>
-      <router-link to="/settings">Settings</router-link>
+      <router-link to="/menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 7h14v12H7a2 2 0 0 0-2 2V7zM5 7v12M9 11h6M9 15h4" />
+        </svg>
+        Menu
+      </router-link>
+      <router-link to="/planner">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 5h12v15H6zM6 9h12M9 5V3M15 5V3M9 13h2M13 13h2M9 17h2" />
+        </svg>
+        Planner
+      </router-link>
+      <router-link to="/grocery">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 0 1 6 0v2" />
+        </svg>
+        Grocery
+      </router-link>
+      <router-link to="/settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 4.5v2M12 17.5v2M4.5 12h2M17.5 12h2M6.8 6.8l1.4 1.4M15.8 15.8l1.4 1.4M6.8 17.2l1.4-1.4M15.8 8.2l1.4-1.4" />
+        </svg>
+        Settings
+      </router-link>
     </nav>
   </aside>
 </template>
@@ -116,9 +137,23 @@ nav {
 }
 
 nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 14px;
   border-radius: 12px;
   color: var(--muted);
+}
+
+nav a svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 nav a.router-link-active {
