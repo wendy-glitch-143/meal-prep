@@ -1,7 +1,11 @@
+<script setup>
+import BrandMark from './BrandMark.vue';
+</script>
+
 <template>
   <header class="nav">
     <span class="brand">
-      <span class="mark">🌿</span>
+      <BrandMark />
       <span class="serif">Prepd</span>
     </span>
     <nav>
