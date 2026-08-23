@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
@@ -73,10 +73,6 @@ function closeForm() {
 }
 
 function openForm() {
-  if (showForm.value) {
-    closeForm();
-    return;
-  }
   editingId.value = null;
   form.value = blankForm();
   showForm.value = true;
@@ -162,18 +158,32 @@ function onDocClick(event) {
   if (!sortMenu.value?.contains(event.target)) showSort.value = false;
 }
 
+async function handleQuery() {
+  if (route.query.edit) {
+    await startEdit({ id: route.query.edit });
+    router.replace({ path: '/menu' });
+  } else if (route.query.add) {
+    openForm();
+    router.replace({ path: '/menu' });
+  }
+}
+
 onMounted(async () => {
   document.addEventListener('click', onDocClick);
   try {
     await load();
-    if (route.query.edit) {
-      await startEdit({ id: route.query.edit });
-      router.replace({ path: '/menu' });
-    }
+    await handleQuery();
   } catch (err) {
     error.value = err.message;
   }
 });
+
+watch(
+  () => [route.query.add, route.query.edit],
+  () => {
+    handleQuery();
+  }
+);
 
 onUnmounted(() => document.removeEventListener('click', onDocClick));
 </script>
@@ -188,9 +198,6 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
       </div>
       <div class="hero-actions">
         <MenuQr />
-        <button class="btn btn-primary" type="button" @click="openForm">
-          {{ showForm ? 'Cancel' : '+ Add recipe' }}
-        </button>
       </div>
     </header>
 
@@ -255,9 +262,12 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
         <button class="btn btn-ghost" type="button" @click="removeIngredientRow(i)">✕</button>
       </div>
       <button class="btn btn-ghost" type="button" @click="addIngredientRow">+ Ingredient</button>
-      <button class="btn btn-sage save" :disabled="saving">
-        {{ saving ? 'Saving…' : editingId ? 'Update recipe' : 'Save recipe' }}
-      </button>
+      <div class="form-actions">
+        <button class="btn btn-ghost" type="button" @click="closeForm">Cancel</button>
+        <button class="btn btn-sage save" :disabled="saving">
+          {{ saving ? 'Saving…' : editingId ? 'Update recipe' : 'Save recipe' }}
+        </button>
+      </div>
     </form>
 
     <div class="toolbar">
@@ -381,7 +391,10 @@ h1 {
   padding: 10px 12px;
 }
 
-.save {
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 14px;
 }
 
