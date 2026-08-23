@@ -5,6 +5,7 @@ import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 import MenuQr from '../components/MenuQr.vue';
 import CategoryFilters from '../components/CategoryFilters.vue';
+import MenuBanner from '../components/MenuBanner.vue';
 
 const EMOJIS = ['🍽️', '🥣', '🥑', '🍓', '🥚', '🍌', '🥗', '🌯', '🍲', '🐟', '🍋', '🥘', '🍝', '🌮', '🍗', '🍚', '🍞', '🧀', '🍎', '🥕', '🥞', '🍕', '🍜', '🥙', '🍪', '☕'];
 
@@ -200,6 +201,8 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
         <MenuQr />
       </div>
     </header>
+
+    <MenuBanner />
 
     <form v-if="showForm" class="card form" @submit.prevent="saveRecipe">
       <h2>{{ editingId ? 'Edit recipe' : 'New recipe' }}</h2>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { api } from '../api';
 import RecipeCard from '../components/RecipeCard.vue';
 import CategoryFilters from '../components/CategoryFilters.vue';
+import MenuBanner from '../components/MenuBanner.vue';
 
 const recipes = ref([]);
 const recipeCategories = ref([]);
@@ -33,6 +34,8 @@ onMounted(async () => {
         <p>Scan, browse, and pick a dish.</p>
       </div>
     </header>
+
+    <MenuBanner />
 
     <CategoryFilters v-model="filter" :categories="recipeCategories" />
 
