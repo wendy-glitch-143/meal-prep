@@ -34,6 +34,17 @@ const isNew = computed(() => {
   background:
     linear-gradient(180deg, var(--accent), transparent 92px),
     var(--paper);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+a:hover .recipe-card,
+.recipe-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--sage);
+  box-shadow: var(--shadow);
 }
 
 .recipe-card.unavailable {

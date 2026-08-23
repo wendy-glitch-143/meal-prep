@@ -107,7 +107,6 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
           <path v-if="collapsed" d="M9 6l6 6-6 6" />
           <path v-else d="M15 6l-6 6 6 6" />
         </svg>
-        <span class="label">{{ collapsed ? 'Expand' : 'Collapse' }}</span>
       </button>
     </div>
   </aside>
@@ -211,8 +210,20 @@ nav {
   gap: 4px;
 }
 
-nav a,
 .side-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+nav a {
   display: flex;
   align-items: center;
   gap: 10px;
