@@ -191,6 +191,8 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
 
 <template>
   <main class="page">
+    <MenuBanner />
+
     <header class="hero">
       <div>
         <p class="eyebrow">This week’s table</p>
@@ -201,8 +203,6 @@ onUnmounted(() => document.removeEventListener('click', onDocClick));
         <MenuQr />
       </div>
     </header>
-
-    <MenuBanner />
 
     <form v-if="showForm" class="card form" @submit.prevent="saveRecipe">
       <h2>{{ editingId ? 'Edit recipe' : 'New recipe' }}</h2>

@@ -27,6 +27,8 @@ onMounted(async () => {
 
 <template>
   <main class="page">
+    <MenuBanner />
+
     <header class="hero">
       <div>
         <p class="eyebrow">Prepd</p>
@@ -34,8 +36,6 @@ onMounted(async () => {
         <p>Scan, browse, and pick a dish.</p>
       </div>
     </header>
-
-    <MenuBanner />
 
     <CategoryFilters v-model="filter" :categories="recipeCategories" />
 
